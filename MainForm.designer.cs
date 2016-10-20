@@ -764,7 +764,7 @@
 			this.tabPage2.Location = new System.Drawing.Point( 4, 22 );
 			this.tabPage2.Name = "tabPage2";
 			this.tabPage2.Padding = new System.Windows.Forms.Padding( 3 );
-			this.tabPage2.Size = new System.Drawing.Size( 198, 349 );
+			this.tabPage2.Size = new System.Drawing.Size( 198, 348 );
 			this.tabPage2.TabIndex = 1;
 			this.tabPage2.Text = "Toolpath";
 			this.tabPage2.UseVisualStyleBackColor = true;
@@ -1101,7 +1101,7 @@
 			this.tabPage3.Location = new System.Drawing.Point( 4, 22 );
 			this.tabPage3.Name = "tabPage3";
 			this.tabPage3.Padding = new System.Windows.Forms.Padding( 3 );
-			this.tabPage3.Size = new System.Drawing.Size( 198, 349 );
+			this.tabPage3.Size = new System.Drawing.Size( 198, 348 );
 			this.tabPage3.TabIndex = 2;
 			this.tabPage3.Text = "DXF";
 			this.tabPage3.UseVisualStyleBackColor = true;
@@ -1136,7 +1136,7 @@
 			this.tabPage4.Controls.Add( this.tbBright );
 			this.tabPage4.Location = new System.Drawing.Point( 4, 22 );
 			this.tabPage4.Name = "tabPage4";
-			this.tabPage4.Size = new System.Drawing.Size( 198, 349 );
+			this.tabPage4.Size = new System.Drawing.Size( 198, 348 );
 			this.tabPage4.TabIndex = 3;
 			this.tabPage4.Text = "Adjust";
 			this.tabPage4.UseVisualStyleBackColor = true;
@@ -1195,7 +1195,6 @@
 			this.tbContrast.Minimum = -50;
 			this.tbContrast.Name = "tbContrast";
 			this.tbContrast.Size = new System.Drawing.Size( 192, 45 );
-			this.tbContrast.SmallChange = 2;
 			this.tbContrast.TabIndex = 1;
 			this.tbContrast.TickFrequency = 5;
 			this.ttHelpTip.SetToolTip( this.tbContrast, "Adjust the contrast of the image" );
@@ -1208,7 +1207,6 @@
 			this.tbBright.Minimum = -50;
 			this.tbBright.Name = "tbBright";
 			this.tbBright.Size = new System.Drawing.Size( 192, 45 );
-			this.tbBright.SmallChange = 2;
 			this.tbBright.TabIndex = 0;
 			this.tbBright.TickFrequency = 5;
 			this.ttHelpTip.SetToolTip( this.tbBright, "Adjust the brightness of the image" );

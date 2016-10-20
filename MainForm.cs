@@ -600,7 +600,7 @@ namespace Halftoner
 							byte pix = sData[imgX + imgY * sourceBits.Stride];
 							float dotSize = dotLookup[pix];
 
-							if(dotSize >= minSize)
+							if(dotSize > minSize)
 							{
 								if(!GotRowIntersection)
 								{
@@ -686,7 +686,7 @@ namespace Halftoner
 							byte pix = sData[imgX + imgY * sourceBits.Stride];
 							float dotSize = dotLookup[pix];
 
-							if( dotSize >= minSize )
+							if( dotSize > minSize )
 							{
 								if (!GotRowIntersection) {
 									points.NewRow();
@@ -773,7 +773,7 @@ namespace Halftoner
 							byte pix = sData[imgX + imgY * sourceBits.Stride];
 							float dotSize = dotLookup[pix];
 
-							if( dotSize >= minSize )
+							if( dotSize > minSize )
 							{
 								if (!GotXIntersection) {
 									points.NewRow();
@@ -1659,6 +1659,8 @@ namespace Halftoner
 				WriteSetting(cfg, "Angle", udAngle.Value.ToString());
 				WriteSetting(cfg, "Wavelength", udWavelength.Value.ToString());
 				WriteSetting(cfg, "Amplitude", udAmplitude.Value.ToString());
+				WriteSetting(cfg, "CenterOffsX", udCenterOffsX.Value.ToString());
+				WriteSetting(cfg, "CenterOffsY", udCenterOffsY.Value.ToString());
 
 				WriteSetting(cfg, "DarkBoost", cbGammaCorrect.Checked.ToString());
 				WriteSetting(cfg, "OffsetOdd", cbOffsetOdd.Checked.ToString());
@@ -1746,6 +1748,8 @@ namespace Halftoner
 				GetDecimalSetting( udAngle, cfg, "Angle" );
 				GetDecimalSetting( udWavelength, cfg, "Wavelength" );
 				GetDecimalSetting( udAmplitude, cfg, "Amplitude" );
+				GetDecimalSetting( udCenterOffsX, cfg, "CenterOffsX" );
+				GetDecimalSetting( udCenterOffsY, cfg, "CenterOffsY" );
 
 				GetBoolSetting( cbGammaCorrect, cfg, "DarkBoost" );
 				GetBoolSetting( cbOffsetOdd, cfg, "OffsetOdd" );
@@ -1766,6 +1770,10 @@ namespace Halftoner
 
 					case "Squares":	rbSquares.Checked = true;
 						style = Style.Squares;
+						break;
+
+					case "Circles": rbCircles.Checked = true;
+						style = Style.Circles;
 						break;
 				}
 
