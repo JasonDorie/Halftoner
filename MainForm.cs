@@ -515,7 +515,8 @@ namespace Halftoner
 			points.Clear();
 
 			double lineSpacing = spacing;
-			if( IsLineStyle() ) spacing *= 0.25;
+			double pointSpacing = spacing;
+			if( IsLineStyle() ) pointSpacing *= 0.25;
 
 			// Compute the size of a circle enclosing the work area
 			// Compute a bounding rect to enclose that circle
@@ -525,7 +526,7 @@ namespace Halftoner
 			// by rotating it about the center of the work piece and arbirary angles will work
 
 			if(style == Style.Dots && offsetOdd) {
-				spacing *= 1.235;	// adjust horizontal spacing of rows to match adjusted offset between rows
+				pointSpacing *= 1.235;	// adjust horizontal spacing of rows to match adjusted offset between rows
 			}
 
 			double MaxRadius = Math.Sqrt( workHeight * workHeight + workWidth * workWidth ) * 0.5 + amplitude;
@@ -536,8 +537,8 @@ namespace Halftoner
 			PointD LineStepY = Rotate( new PointD( 0, lineSpacing ), angle );
 			PointD LineTangentX = Rotate( new PointD( 0, 1 ), angle );
 			PointD LineTangentY = Rotate( new PointD( 1, 0 ), angle );
-			PointD StepX = Rotate( new PointD( spacing, 0 ), angle );
-			PointD StepY = Rotate( new PointD( 0, spacing ), angle );
+			PointD StepX = Rotate( new PointD( pointSpacing, 0 ), angle );
+			PointD StepY = Rotate( new PointD( 0, pointSpacing ), angle );
 
 			Start.X = workWidth * 0.5 + Start.X;
 			Start.Y = workHeight * 0.5 + Start.Y;
@@ -549,7 +550,7 @@ namespace Halftoner
 			double invScaleX = 1.0 / scaleX;
 			double invScaleY = 1.0 / scaleY;
 
-			double waveStep = TwoPI / (wavelength / spacing);
+			double waveStep = TwoPI / (wavelength / pointSpacing);
 			bool OddLine = false;
 
 			RectangleF workRect = new RectangleF( (float)border, (float)border, (float)(workWidth - border * 2.0), (float)(workHeight - border * 2.0) );
@@ -574,9 +575,9 @@ namespace Halftoner
 					bool GotRowIntersection = false;
 					int lastStep = -2;
 
-					int TotalSteps = (int)((rad * 2.0 * Math.PI) / spacing + 0.5);
+					int TotalSteps = (int)((rad * 2.0 * Math.PI) / pointSpacing + 0.5);
 
-					double stepAngle = (TotalSteps * spacing) / rad / TotalSteps;
+					double stepAngle = (TotalSteps * pointSpacing) / rad / TotalSteps;
 
 					int step = 0;
 					for(double circleAngle = 0.0; circleAngle < 2.0 * Math.PI; circleAngle += stepAngle, step++)
@@ -752,7 +753,7 @@ namespace Halftoner
 					int lastStep = -2;
 					int step = 0;
 
-					for(double fx = -MaxRadius; fx < MaxRadius; fx += spacing, step++)
+					for(double fx = -MaxRadius; fx < MaxRadius; fx += pointSpacing, step++)
 					{
 						double waveMult = Math.Sin( waveAngle ) * amplitude;
 						double xpt = x + LineTangentX.X * waveMult;
@@ -831,6 +832,57 @@ namespace Halftoner
 
 			filterImage.UnlockBits( sourceBits );
 		}
+
+
+		void OptimizePoints()
+		{
+			if(style != Style.Lines && style != Style.Squares && style != Style.Circles ) return;
+			float xyThresh = 0.0025f;
+			float wThresh = 0.0005f;
+
+			if(imperial == false) {	//metric units? (make tolerances larger to account for smaller units)
+				xyThresh *= 25.0f;
+				wThresh *= 25.0f;
+			}
+
+			foreach(HTRow row in points.Rows)
+			{
+				foreach(HTLine line in row.Lines)
+				{
+					int i = 1;
+					while( i < line.Points.Count-1 )
+					{
+						// check to see if this point is a lerp between its neighbors, if so, delete it
+
+						HTPoint p0 = line.Points[i-1];
+						HTPoint p1 = line.Points[i];
+						HTPoint p2 = line.Points[i+1];
+
+						HTPoint delt1 = p2 - p0;	// Delta between neighbor points
+						HTPoint delt2 = p1 - p0;	// Delta between this point and left point
+
+						float len1 = delt1.Length;	// Distance between neighbors
+						float len2 = delt2.Length;	// Distance between this point and left point
+
+						float ratio = len2 / len1;	// Ratio of those distances
+
+						// If p1 is linearly between p0 and p2, a lerp along the path from p0 to p2 based on the ratio of distances
+						// should produce p1.
+
+						HTPoint interp = p0 + delt1 * ratio;	// Compute a lerp between p0 to p2 based on the ratio of distances
+						HTPoint delt = interp - p1;
+
+						if(Math.Abs( delt.x ) < xyThresh && Math.Abs( delt.y ) < xyThresh && Math.Abs( delt.w ) < wThresh ) {
+							line.Points.RemoveAt( i );
+						}
+						else {
+							i++;
+						}
+					}
+				}
+			}
+		}
+
 
 		private void udWidth_ValueChanged(object sender, EventArgs e)
 		{
@@ -923,7 +975,9 @@ namespace Halftoner
 
 		private void btnWriteGCode_Click(object sender, EventArgs e)
 		{
+			OptimizePoints();
 			WriteGCode();
+			ComputePoints();
 		}
 
 
@@ -1309,6 +1363,7 @@ namespace Halftoner
 			double originY = (double)udOriginY.Value;
 			double zeroZ = (double)udZOffset.Value;
 			bool twoPassCuts = cbTwoPassCuts.Checked;
+			bool addLineNumbers = cbIncludeLineNumbers.Checked;
 			bool forLaser = cbForLaser.Checked;
 
 			// If the user doesn't want a specific per-point retract value, just use the Safe Z
@@ -1338,16 +1393,20 @@ namespace Halftoner
 
 				// Rapid Move(00), Inches(20)/Metric(21), XY Plane(17), Absolute mode(90), Radius Comp off(40), Tool length comp off(49), Cancel canned cycle(80)
 				int UseMetric = rbInches.Checked ? 0 : 1;
-				file.WriteLine("N{0}0 G00 G2{1} G17 G90 G40 G49 G80", LineNum++, UseMetric);
+				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+				file.WriteLine( "G00 G2{0} G17 G90 G40 G49 G80", UseMetric );
 
 				// Select Tool #1, auto-change
-				file.WriteLine("N{0}0 T1 M06", LineNum++);
+				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+				file.WriteLine( "T1 M06" );
 
 				// Goto SafeZ rapid
-				file.WriteLine("N{0}0 G00 Z{1}", LineNum++, safeZ.ToString(us));
+				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+				file.WriteLine( "G00 Z{0}", safeZ.ToString( us ) );
 
 				// Spindle start
-				file.WriteLine("N{0}0 S{1} M03", LineNum++, spindleSpeed.ToString(us));
+				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+				file.WriteLine( "S{0} M03", spindleSpeed.ToString( us ) );
 
 				string XYFmt = UseMetric == 1 ? "0.00" : "0.0000";
 				string ZFmt = UseMetric == 1 ? "0.000" : "0.0000";
@@ -1397,18 +1456,22 @@ namespace Halftoner
 								double X = pt.x + originX;
 								double Y = (workHeight - pt.y) + originY;
 
-								file.WriteLine( "N{0}0 G00 X{1} Y{2}", LineNum++, X.ToString(XYFmt, us), Y.ToString(XYFmt, us) );
+								if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+								file.WriteLine( "G00 X{0} Y{1}", X.ToString( XYFmt, us ), Y.ToString( XYFmt, us ) );
 
 								double Depth = (pt.w * 0.5) / tanAngle + engraveDepth;
 
 								// Rapid Goto Z0.0
-								file.WriteLine( "N{0}0 G00 Z{1}", LineNum++, zeroZ.ToString(ZFmt, us) );
+								if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+								file.WriteLine( "G00 Z{0}", zeroZ.ToString( ZFmt, us ) );
 
 								// Feed Goto -Depth
-								file.WriteLine( "N{0}0 G01 Z{1} F{2}", LineNum++, (zeroZ-Depth).ToString(ZFmt, us), feedRate.ToString(us) );
+								if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+								file.WriteLine( "G01 Z{0} F{1}", (zeroZ - Depth).ToString( ZFmt, us ), feedRate.ToString( us ) );
 
 								// Rapid Goto Point Retract depth
-								file.WriteLine("N{0}0 G00 Z{1}", LineNum++, pointRetract.ToString(us));
+								if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+								file.WriteLine( "G00 Z{0}", pointRetract.ToString( us ) );
 							}
 						}
 
@@ -1461,10 +1524,12 @@ namespace Halftoner
 								double Y = (workHeight - firstPt.y) + originY;
 
 								// Rapid GotoXY line start (+ originX, originY)
-								file.WriteLine( "N{0}0 G00 X{1} Y{2}", LineNum++, X.ToString(XYFmt,us), Y.ToString(XYFmt,us) );
+								if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+								file.WriteLine( "G00 X{0} Y{1}", X.ToString( XYFmt, us ), Y.ToString( XYFmt, us ) );
 
 								// Rapid Goto Z0.0
-								file.WriteLine("N{0}0 G00 Z{1}", LineNum++, zeroZ.ToString(ZFmt, us) );
+								if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+								file.WriteLine( "G00 Z{0}", zeroZ.ToString( ZFmt, us ) );
 
 								double Depth;
 								if(forLaser) {
@@ -1474,7 +1539,8 @@ namespace Halftoner
 									Depth = (firstPt.w * 0.5) / tanAngle + engraveDepth;
 								}
 
-								file.WriteLine("N{0}0 G1 X{1} Y{2} Z{3} F{4}", LineNum++,
+								if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+								file.WriteLine( "G1 X{0} Y{1} Z{2} F{3}", 
 									X.ToString( XYFmt, us ), Y.ToString( XYFmt, us ), (zeroZ - Depth).ToString( ZFmt, us ), feedRate.ToString( us ) );
 
 								for( int pointIndex=pointStart; pointIndex != pointEnd; pointIndex += pointStep )
@@ -1492,14 +1558,16 @@ namespace Halftoner
 									Y = (workHeight - pt.y) + originY;
 
 									// Feed Goto X,Y, -Depth
-									file.WriteLine("N{0}0 G1 X{1} Y{2} Z{3}", LineNum++,
+									if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+									file.WriteLine( "G1 X{0} Y{1} Z{2}",
 										X.ToString(XYFmt,us), Y.ToString(XYFmt,us), (zeroZ-Depth).ToString(ZFmt,us));
 								}
 
 								if(twoPassCuts == false || OddRow || (lineIndex + lineStep != lineEnd))
 								{
 									// Rapid Goto Point Retract depth
-									file.WriteLine( "N{0}0 G00 Z{1}", LineNum++, pointRetract.ToString(us) );
+									if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+									file.WriteLine( "G00 Z{0}", pointRetract.ToString( us ) );
 								}
 							}
 						}
@@ -1508,13 +1576,16 @@ namespace Halftoner
 				}
 
 				// Spindle stop
-				file.WriteLine("N{0}0 M05", LineNum++);
+				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+				file.WriteLine( "M05" );
 
 				// Rapid Goto Safe Z depth
-				file.WriteLine("N{0}0 G00 Z{1}", LineNum++, safeZ.ToString(us));
+				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+				file.WriteLine( "G00 Z{0}", safeZ.ToString( us ) );
 
 				// Write the program stop
-				file.WriteLine("N{0}0 M30", LineNum++);
+				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+				file.WriteLine( "M30" );
 
 				// Close the file
 				file.Flush();

@@ -110,6 +110,7 @@
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
 			this.ttHelpTip = new System.Windows.Forms.ToolTip( this.components );
 			this.btnTest = new System.Windows.Forms.Button();
+			this.cbIncludeLineNumbers = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.pbPreview)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udWidth)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udHeight)).BeginInit();
@@ -740,6 +741,7 @@
 			// 
 			// tabPage2
 			// 
+			this.tabPage2.Controls.Add( this.cbIncludeLineNumbers );
 			this.tabPage2.Controls.Add( this.cbForLaser );
 			this.tabPage2.Controls.Add( this.label16 );
 			this.tabPage2.Controls.Add( this.udZOffset );
@@ -772,7 +774,7 @@
 			// cbForLaser
 			// 
 			this.cbForLaser.AutoSize = true;
-			this.cbForLaser.Location = new System.Drawing.Point( 15, 246 );
+			this.cbForLaser.Location = new System.Drawing.Point( 15, 258 );
 			this.cbForLaser.Name = "cbForLaser";
 			this.cbForLaser.Size = new System.Drawing.Size( 155, 17 );
 			this.cbForLaser.TabIndex = 29;
@@ -1340,6 +1342,20 @@
 			this.btnTest.UseVisualStyleBackColor = true;
 			this.btnTest.Click += new System.EventHandler( this.btnTest_Click );
 			// 
+			// cbIncludeLineNumbers
+			// 
+			this.cbIncludeLineNumbers.AutoSize = true;
+			this.cbIncludeLineNumbers.Checked = true;
+			this.cbIncludeLineNumbers.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.cbIncludeLineNumbers.Location = new System.Drawing.Point( 15, 240 );
+			this.cbIncludeLineNumbers.Name = "cbIncludeLineNumbers";
+			this.cbIncludeLineNumbers.Size = new System.Drawing.Size( 123, 17 );
+			this.cbIncludeLineNumbers.TabIndex = 30;
+			this.cbIncludeLineNumbers.Text = "Include line numbers";
+			this.ttHelpTip.SetToolTip( this.cbIncludeLineNumbers, "Creates GCode with unique line numbers (some machines require this, but it makes " +
+					"bigger files)" );
+			this.cbIncludeLineNumbers.UseVisualStyleBackColor = true;
+			// 
 			// MainForm
 			// 
 			this.AllowDrop = true;
@@ -1485,6 +1501,7 @@
 		private System.Windows.Forms.Button btnAutoLevels;
 		private System.Windows.Forms.Label label20;
 		private System.Windows.Forms.Label label19;
+		private System.Windows.Forms.CheckBox cbIncludeLineNumbers;
 	}
 }
 
