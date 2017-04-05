@@ -29,6 +29,7 @@
 		private void InitializeComponent()
 		{
 			this.components = new System.ComponentModel.Container();
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager( typeof( MainForm ) );
 			this.pbPreview = new System.Windows.Forms.PictureBox();
 			this.rbPreview = new System.Windows.Forms.RadioButton();
 			this.rbOriginal = new System.Windows.Forms.RadioButton();
@@ -66,7 +67,7 @@
 			this.cbOffsetOdd = new System.Windows.Forms.CheckBox();
 			this.cbInvert = new System.Windows.Forms.CheckBox();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
-			this.cbForLaser = new System.Windows.Forms.CheckBox();
+			this.cbIncludeLineNumbers = new System.Windows.Forms.CheckBox();
 			this.label16 = new System.Windows.Forms.Label();
 			this.udZOffset = new System.Windows.Forms.NumericUpDown();
 			this.label11 = new System.Windows.Forms.Label();
@@ -91,6 +92,7 @@
 			this.lblWriteDXFHelp = new System.Windows.Forms.Label();
 			this.btnWriteDXF = new System.Windows.Forms.Button();
 			this.tabPage4 = new System.Windows.Forms.TabPage();
+			this.cbNegateImage = new System.Windows.Forms.CheckBox();
 			this.lblContrast = new System.Windows.Forms.Label();
 			this.lblBright = new System.Windows.Forms.Label();
 			this.btnAutoLevels = new System.Windows.Forms.Button();
@@ -110,7 +112,6 @@
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
 			this.ttHelpTip = new System.Windows.Forms.ToolTip( this.components );
 			this.btnTest = new System.Windows.Forms.Button();
-			this.cbIncludeLineNumbers = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.pbPreview)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udWidth)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udHeight)).BeginInit();
@@ -742,7 +743,6 @@
 			// tabPage2
 			// 
 			this.tabPage2.Controls.Add( this.cbIncludeLineNumbers );
-			this.tabPage2.Controls.Add( this.cbForLaser );
 			this.tabPage2.Controls.Add( this.label16 );
 			this.tabPage2.Controls.Add( this.udZOffset );
 			this.tabPage2.Controls.Add( this.label11 );
@@ -771,17 +771,19 @@
 			this.tabPage2.Text = "Toolpath";
 			this.tabPage2.UseVisualStyleBackColor = true;
 			// 
-			// cbForLaser
+			// cbIncludeLineNumbers
 			// 
-			this.cbForLaser.AutoSize = true;
-			this.cbForLaser.Location = new System.Drawing.Point( 15, 258 );
-			this.cbForLaser.Name = "cbForLaser";
-			this.cbForLaser.Size = new System.Drawing.Size( 155, 17 );
-			this.cbForLaser.TabIndex = 29;
-			this.cbForLaser.Text = "Output for laser (Z = power)";
-			this.ttHelpTip.SetToolTip( this.cbForLaser, "Cut lines in both directions - improves cut edges on some materials" );
-			this.cbForLaser.UseVisualStyleBackColor = true;
-			this.cbForLaser.Visible = false;
+			this.cbIncludeLineNumbers.AutoSize = true;
+			this.cbIncludeLineNumbers.Checked = true;
+			this.cbIncludeLineNumbers.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.cbIncludeLineNumbers.Location = new System.Drawing.Point( 15, 240 );
+			this.cbIncludeLineNumbers.Name = "cbIncludeLineNumbers";
+			this.cbIncludeLineNumbers.Size = new System.Drawing.Size( 123, 17 );
+			this.cbIncludeLineNumbers.TabIndex = 30;
+			this.cbIncludeLineNumbers.Text = "Include line numbers";
+			this.ttHelpTip.SetToolTip( this.cbIncludeLineNumbers, "Creates GCode with unique line numbers (some machines require this, but it makes " +
+					"bigger files)" );
+			this.cbIncludeLineNumbers.UseVisualStyleBackColor = true;
 			// 
 			// label16
 			// 
@@ -1112,23 +1114,23 @@
 			// 
 			this.lblWriteDXFHelp.Location = new System.Drawing.Point( 10, 20 );
 			this.lblWriteDXFHelp.Name = "lblWriteDXFHelp";
-			this.lblWriteDXFHelp.Size = new System.Drawing.Size( 182, 59 );
+			this.lblWriteDXFHelp.Size = new System.Drawing.Size( 182, 127 );
 			this.lblWriteDXFHelp.TabIndex = 1;
-			this.lblWriteDXFHelp.Text = "When using the Lines or Squares styles you must choose a non-zero minimum dot siz" +
-				"e or the generated DXF may be invalid.";
+			this.lblWriteDXFHelp.Text = resources.GetString( "lblWriteDXFHelp.Text" );
 			// 
 			// btnWriteDXF
 			// 
-			this.btnWriteDXF.Location = new System.Drawing.Point( 7, 115 );
+			this.btnWriteDXF.Location = new System.Drawing.Point( 7, 174 );
 			this.btnWriteDXF.Name = "btnWriteDXF";
 			this.btnWriteDXF.Size = new System.Drawing.Size( 185, 23 );
 			this.btnWriteDXF.TabIndex = 0;
-			this.btnWriteDXF.Text = "Write to DXF";
+			this.btnWriteDXF.Text = "Write to DXF or PNG";
 			this.btnWriteDXF.UseVisualStyleBackColor = true;
 			this.btnWriteDXF.Click += new System.EventHandler( this.btnWriteDXF_Click );
 			// 
 			// tabPage4
 			// 
+			this.tabPage4.Controls.Add( this.cbNegateImage );
 			this.tabPage4.Controls.Add( this.lblContrast );
 			this.tabPage4.Controls.Add( this.lblBright );
 			this.tabPage4.Controls.Add( this.btnAutoLevels );
@@ -1142,6 +1144,17 @@
 			this.tabPage4.TabIndex = 3;
 			this.tabPage4.Text = "Adjust";
 			this.tabPage4.UseVisualStyleBackColor = true;
+			// 
+			// cbNegateImage
+			// 
+			this.cbNegateImage.AutoSize = true;
+			this.cbNegateImage.Location = new System.Drawing.Point( 54, 214 );
+			this.cbNegateImage.Name = "cbNegateImage";
+			this.cbNegateImage.Size = new System.Drawing.Size( 93, 17 );
+			this.cbNegateImage.TabIndex = 7;
+			this.cbNegateImage.Text = "Negate Image";
+			this.cbNegateImage.UseVisualStyleBackColor = true;
+			this.cbNegateImage.CheckedChanged += new System.EventHandler( this.cbNegateImage_CheckedChanged );
 			// 
 			// lblContrast
 			// 
@@ -1342,20 +1355,6 @@
 			this.btnTest.UseVisualStyleBackColor = true;
 			this.btnTest.Click += new System.EventHandler( this.btnTest_Click );
 			// 
-			// cbIncludeLineNumbers
-			// 
-			this.cbIncludeLineNumbers.AutoSize = true;
-			this.cbIncludeLineNumbers.Checked = true;
-			this.cbIncludeLineNumbers.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.cbIncludeLineNumbers.Location = new System.Drawing.Point( 15, 240 );
-			this.cbIncludeLineNumbers.Name = "cbIncludeLineNumbers";
-			this.cbIncludeLineNumbers.Size = new System.Drawing.Size( 123, 17 );
-			this.cbIncludeLineNumbers.TabIndex = 30;
-			this.cbIncludeLineNumbers.Text = "Include line numbers";
-			this.ttHelpTip.SetToolTip( this.cbIncludeLineNumbers, "Creates GCode with unique line numbers (some machines require this, but it makes " +
-					"bigger files)" );
-			this.cbIncludeLineNumbers.UseVisualStyleBackColor = true;
-			// 
 			// MainForm
 			// 
 			this.AllowDrop = true;
@@ -1373,7 +1372,7 @@
 			this.Controls.Add( this.pbPreview );
 			this.MinimumSize = new System.Drawing.Size( 648, 518 );
 			this.Name = "MainForm";
-			this.Text = "Halftoner V1.6 - by Jason Dorie";
+			this.Text = "Halftoner V1.65 - by Jason Dorie";
 			this.DragDrop += new System.Windows.Forms.DragEventHandler( this.MainForm_DragDrop );
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler( this.MainForm_FormClosing );
 			this.DragOver += new System.Windows.Forms.DragEventHandler( this.MainForm_DragOver );
@@ -1487,7 +1486,6 @@
 		private System.Windows.Forms.NumericUpDown udRandomDots;
 		private System.Windows.Forms.Label label16;
 		private System.Windows.Forms.NumericUpDown udZOffset;
-		private System.Windows.Forms.CheckBox cbForLaser;
 		private System.Windows.Forms.RadioButton rbCircles;
 		private System.Windows.Forms.Label label17;
 		private System.Windows.Forms.NumericUpDown udCenterOffsX;
@@ -1502,6 +1500,7 @@
 		private System.Windows.Forms.Label label20;
 		private System.Windows.Forms.Label label19;
 		private System.Windows.Forms.CheckBox cbIncludeLineNumbers;
+		private System.Windows.Forms.CheckBox cbNegateImage;
 	}
 }
 

@@ -25,6 +25,7 @@ namespace Halftoner
 		int[] adjustedLevels = new int[256];
 		float brightness = 0.0f;
 		float contrast = 1.0f;
+		bool negateImage = false;
 		bool adjustmentsChanged = true;
 
 
@@ -44,7 +45,14 @@ namespace Halftoner
 			Random,
 		};
 
+		enum FileMode
+		{
+			DXF,
+			PNG,
+		};
+
 		Style style = Style.Dots;
+		FileMode fileMode = FileMode.DXF;
 
 		double workWidth = 1.0;
 		double workHeight = 1.0;
@@ -470,7 +478,7 @@ namespace Halftoner
 
 				bright = (bright - 0.5 + brightness) * contrast + 0.5;
 
-				if (invert) bright = 1.0 - bright;
+				if (invert ^ negateImage) bright = 1.0 - bright;
 
 				if (style == Style.Dots || style == Style.Random )
 				{
@@ -509,14 +517,24 @@ namespace Halftoner
 			return style == Style.Lines || style == Style.Circles || style == Style.Squares;
 		}
 
-
 		unsafe void ComputePoints()
+		{
+			ComputePoints( false );
+		}
+
+
+		unsafe void ComputePoints( bool IsHighQuality )
 		{
 			points.Clear();
 
 			double lineSpacing = spacing;
 			double pointSpacing = spacing;
-			if( IsLineStyle() ) pointSpacing *= 0.25;
+			if(IsLineStyle()) {
+				pointSpacing *= 0.25;
+				if(IsHighQuality) {
+					pointSpacing *= 0.25;
+				}
+			}
 
 			// Compute the size of a circle enclosing the work area
 			// Compute a bounding rect to enclose that circle
@@ -1013,7 +1031,7 @@ namespace Halftoner
 		{
 			// Choose DXF file
 			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.Filter = "DXF files|*.dxf|All files (*.*)|*.*";
+			dlg.Filter = "DXF files|*.dxf|PNG files|*.png|All files (*.*)|*.*";
 			dlg.FilterIndex = 1;
 			dlg.AddExtension = true;
 			dlg.DefaultExt = "dxf";
@@ -1023,16 +1041,59 @@ namespace Halftoner
 
 			if( filename != null || dlg.ShowDialog() == DialogResult.OK )
 			{
-				// Output points as circles to DXF file
+				// Output points as circles to DXF or PNG file
+
+				fileMode = dlg.FileName.ToLower().EndsWith( ".png" ) ? FileMode.PNG : FileMode.DXF;
+
+				if(fileMode == FileMode.PNG)
+				{
+					// Recompute in high-quality mode (extra points)
+					ComputePoints( true );
+
+					// Figure out the correct size to make the "preview" image for 600dpi
+
+					int pixWidth, pixHeight;
+					if(imperial)
+					{
+						pixWidth = (int)(workWidth * 600.0);
+						pixHeight = (int)(workHeight * 600.0);
+					}
+					else
+					{
+						pixWidth = (int)(workWidth * 600.0 / 25.4);
+						pixHeight = (int)(workHeight * 600.0 / 25.4);
+					}
+
+					if(previewImage != null) {
+						previewImage.Dispose();
+					}
+
+					previewImage = new Bitmap( pixWidth, pixHeight, System.Drawing.Imaging.PixelFormat.Format32bppRgb );
+					previewImage.SetResolution( 600.0f, 600.0f );
+
+					// redraw it
+					DrawPreviewCircles();
+
+					// save it
+					previewImage.Save( dlg.FileName, ImageFormat.Png );
+
+					// discard it
+					previewImage.Dispose();
+					previewImage = null;
+
+					// invalidate the preview window
+					RedrawPreview( false, true, false );
+					return;
+				}
 
 				// Create the file
 				StreamWriter file = new StreamWriter(dlg.FileName, false, Encoding.ASCII);
 
 				// Write the header
-				file.WriteLine(0);
-				file.WriteLine("SECTION");
-				file.WriteLine(2);
-				file.WriteLine("ENTITIES");
+				file.WriteLine( 0 );
+				file.WriteLine( "SECTION" );
+				file.WriteLine( 2 );
+				file.WriteLine( "ENTITIES" );
 
 				if (style == Style.Dots)
 				{
@@ -1062,6 +1123,9 @@ namespace Halftoner
 							{
 								PointD ptTop, ptBot;
 								PointD prevTop = new PointD(0,0), prevBot = new PointD(0,0);
+
+								List<string> returnLines = new List<string>();	// This list stores lines for the way back
+
 
 								for( int p=0; p<line.Points.Count; p++ )
 								{
@@ -1186,11 +1250,10 @@ namespace Halftoner
 				}
 
 				// Write the footer
-				file.WriteLine(0);
-				file.WriteLine("ENDSEC");
-				file.WriteLine(0);
-				file.WriteLine("EOF");
-
+				file.WriteLine( 0 );
+				file.WriteLine( "ENDSEC" );
+				file.WriteLine( 0 );
+				file.WriteLine( "EOF" );
 
 				// Close the file
 				file.Flush();
@@ -1364,7 +1427,6 @@ namespace Halftoner
 			double zeroZ = (double)udZOffset.Value;
 			bool twoPassCuts = cbTwoPassCuts.Checked;
 			bool addLineNumbers = cbIncludeLineNumbers.Checked;
-			bool forLaser = cbForLaser.Checked;
 
 			// If the user doesn't want a specific per-point retract value, just use the Safe Z
 			if (cbPointRetract.Checked == false) {
@@ -1531,13 +1593,7 @@ namespace Halftoner
 								if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
 								file.WriteLine( "G00 Z{0}", zeroZ.ToString( ZFmt, us ) );
 
-								double Depth;
-								if(forLaser) {
-									Depth = firstPt.w + engraveDepth;	// Set max dot size == max Z depth
-								}
-								else {
-									Depth = (firstPt.w * 0.5) / tanAngle + engraveDepth;
-								}
+								double Depth = (firstPt.w * 0.5) / tanAngle + engraveDepth;
 
 								if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
 								file.WriteLine( "G1 X{0} Y{1} Z{2} F{3}", 
@@ -1547,12 +1603,7 @@ namespace Halftoner
 								{
 									HTPoint pt = line.Points[pointIndex];
 
-									if(forLaser) {
-										Depth = pt.w + engraveDepth;
-									}
-									else {
-										Depth = (pt.w * 0.5) / tanAngle + engraveDepth;
-									}
+									Depth = (pt.w * 0.5) / tanAngle + engraveDepth;
 
 									X = pt.x + originX;
 									Y = (workHeight - pt.y) + originY;
@@ -1938,6 +1989,12 @@ namespace Halftoner
 			tbContrast.Value = (int)(cont * 50.0f);
 			InternalChange = false;
 
+			Controls_AdjustmentsChanged( null, null );
+		}
+
+		private void cbNegateImage_CheckedChanged( object sender, EventArgs e )
+		{
+			negateImage = cbNegateImage.Checked;
 			Controls_AdjustmentsChanged( null, null );
 		}
 	}
