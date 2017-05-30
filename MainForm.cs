@@ -1427,6 +1427,8 @@ namespace Halftoner
 			double zeroZ = (double)udZOffset.Value;
 			bool twoPassCuts = cbTwoPassCuts.Checked;
 			bool addLineNumbers = cbIncludeLineNumbers.Checked;
+			bool GRBLCode = cbGrblCompat.Checked;
+			if(GRBLCode) addLineNumbers = false;
 
 			// If the user doesn't want a specific per-point retract value, just use the Safe Z
 			if (cbPointRetract.Checked == false) {
@@ -1456,19 +1458,28 @@ namespace Halftoner
 				// Rapid Move(00), Inches(20)/Metric(21), XY Plane(17), Absolute mode(90), Radius Comp off(40), Tool length comp off(49), Cancel canned cycle(80)
 				int UseMetric = rbInches.Checked ? 0 : 1;
 				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
-				file.WriteLine( "G00 G2{0} G17 G90 G40 G49 G80", UseMetric );
 
-				// Select Tool #1, auto-change
-				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
-				file.WriteLine( "T1 M06" );
+				if(GRBLCode) {
+					file.WriteLine( "G00 G2{0} G17 G90 G40", UseMetric );
+				}
+				else {
+					file.WriteLine( "G00 G2{0} G17 G90 G40 G49 G80", UseMetric );
+
+					// Select Tool #1, auto-change
+					if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+					file.WriteLine( "T1 M06" );
+				}
+
 
 				// Goto SafeZ rapid
 				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
 				file.WriteLine( "G00 Z{0}", safeZ.ToString( us ) );
 
-				// Spindle start
-				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
-				file.WriteLine( "S{0} M03", spindleSpeed.ToString( us ) );
+				if(GRBLCode == false) {
+					// Spindle start
+					if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+					file.WriteLine( "S{0} M03", spindleSpeed.ToString( us ) );
+				}
 
 				string XYFmt = UseMetric == 1 ? "0.00" : "0.0000";
 				string ZFmt = UseMetric == 1 ? "0.000" : "0.0000";
@@ -1626,9 +1637,11 @@ namespace Halftoner
 					}
 				}
 
-				// Spindle stop
-				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
-				file.WriteLine( "M05" );
+				if(GRBLCode == false) {
+					// Spindle stop
+					if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
+					file.WriteLine( "M05" );
+				}
 
 				// Rapid Goto Safe Z depth
 				if(addLineNumbers) file.Write( "N{0}0 ", LineNum++ );
@@ -1801,6 +1814,8 @@ namespace Halftoner
 
 				WriteSetting( cfg, "EngraveDepth", udEngraveDepth.Value.ToString() );
 				WriteSetting( cfg, "TwoPass", cbTwoPassCuts.Checked.ToString() );
+				WriteSetting( cfg, "LineNumbers", cbIncludeLineNumbers.Checked.ToString() );
+				WriteSetting( cfg, "GrblCompat", cbGrblCompat.Checked.ToString() );
 
 				WriteSetting(cfg, "ZOffset", udZOffset.Value.ToString());
 				WriteSetting(cfg, "OriginX", udOriginX.Value.ToString());
@@ -1909,6 +1924,8 @@ namespace Halftoner
 
 				GetDecimalSetting( udEngraveDepth, cfg, "EngraveDepth" );
 				GetBoolSetting( cbTwoPassCuts, cfg, "TwoPass" );
+				GetBoolSetting( cbIncludeLineNumbers, cfg, "LineNumbers" );
+				GetBoolSetting( cbGrblCompat, cfg, "GrblCompat" );
 
 				GetDecimalSetting( udZOffset, cfg, "ZOffset" );
 				GetDecimalSetting( udOriginX, cfg, "OriginX" );

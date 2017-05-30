@@ -112,6 +112,7 @@
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
 			this.ttHelpTip = new System.Windows.Forms.ToolTip( this.components );
 			this.btnTest = new System.Windows.Forms.Button();
+			this.cbGrblCompat = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.pbPreview)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udWidth)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udHeight)).BeginInit();
@@ -742,6 +743,7 @@
 			// 
 			// tabPage2
 			// 
+			this.tabPage2.Controls.Add( this.cbGrblCompat );
 			this.tabPage2.Controls.Add( this.cbIncludeLineNumbers );
 			this.tabPage2.Controls.Add( this.label16 );
 			this.tabPage2.Controls.Add( this.udZOffset );
@@ -1355,6 +1357,17 @@
 			this.btnTest.UseVisualStyleBackColor = true;
 			this.btnTest.Click += new System.EventHandler( this.btnTest_Click );
 			// 
+			// cbGrblCompat
+			// 
+			this.cbGrblCompat.AutoSize = true;
+			this.cbGrblCompat.Location = new System.Drawing.Point( 15, 258 );
+			this.cbGrblCompat.Name = "cbGrblCompat";
+			this.cbGrblCompat.Size = new System.Drawing.Size( 145, 17 );
+			this.cbGrblCompat.TabIndex = 31;
+			this.cbGrblCompat.Text = "GRBL compatible GCode";
+			this.ttHelpTip.SetToolTip( this.cbGrblCompat, "Creates GCode that is directly compatible with GRBL / Easel" );
+			this.cbGrblCompat.UseVisualStyleBackColor = true;
+			// 
 			// MainForm
 			// 
 			this.AllowDrop = true;
@@ -1372,7 +1385,7 @@
 			this.Controls.Add( this.pbPreview );
 			this.MinimumSize = new System.Drawing.Size( 648, 518 );
 			this.Name = "MainForm";
-			this.Text = "Halftoner V1.65 - by Jason Dorie";
+			this.Text = "Halftoner V1.7 - by Jason Dorie";
 			this.DragDrop += new System.Windows.Forms.DragEventHandler( this.MainForm_DragDrop );
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler( this.MainForm_FormClosing );
 			this.DragOver += new System.Windows.Forms.DragEventHandler( this.MainForm_DragOver );
@@ -1501,6 +1514,7 @@
 		private System.Windows.Forms.Label label19;
 		private System.Windows.Forms.CheckBox cbIncludeLineNumbers;
 		private System.Windows.Forms.CheckBox cbNegateImage;
+		private System.Windows.Forms.CheckBox cbGrblCompat;
 	}
 }
 
